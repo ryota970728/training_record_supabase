@@ -51,6 +51,10 @@ Deno.serve(async (req) => {
       // menu_masterテーブルへデータを追加する
       return await insertMenu(req)
       break;
+    case "deleteRecord":
+      // recordテーブルからデータ削除する
+      return await deleteRecord(req)
+      break;
     default:
       return new Response(JSON.stringify({ error: "Not Found" }), {
         status: 404,
@@ -298,6 +302,59 @@ async function insertMenu(req: Request): Promise<Response> {
 
   // 成功
   return new Response(JSON.stringify({ message: "Data inserted successfully" }), { // ここを修正
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json"
+    },
+  });
+}
+
+async function deleteRecord(req: Request): Promise<Response> {
+  // bodyをJSON形式で取得
+  const body = await req.json()
+  const recordId = JSON.parse(body.recordId);
+
+  // set_detailテーブルからrecordIdに紐づくデータを削除
+  const {error: deleteSetDetailError} = await supabase
+  .from("set_detail")
+  .delete()
+  .eq("record_id", recordId);
+
+  // set_detail削除時のエラーハンドリング
+  if (deleteSetDetailError) {
+    console.error('deleteRecord set_detail error:', deleteSetDetailError);
+    return new Response(JSON.stringify({ error: deleteSetDetailError.message }), {
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
+    });
+  }
+
+  // recordテーブルからrecordIdに紐づくデータを削除
+  const { error: deleteRecordError } = await supabase
+  .from("record")
+  .delete()
+  .eq("record_id", recordId);
+
+  // record削除時のエラーハンドリング
+  if (deleteRecordError) {
+    console.error('deleteRecord record error:', deleteRecordError);
+    // 注意: ここでエラーが発生した場合、set_detailのデータは削除されています。
+    // トランザクション管理が必要な場合は別途実装を検討してください。
+    return new Response(JSON.stringify({ error: deleteRecordError.message }), {
+      status: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
+    });
+  }
+
+  // 成功
+  return new Response(JSON.stringify({ message: "Record deleted successfully" }), {
     status: 200,
     headers: {
       "Access-Control-Allow-Origin": "*",
