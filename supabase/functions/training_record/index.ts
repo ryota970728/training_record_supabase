@@ -55,6 +55,18 @@ Deno.serve(async (req) => {
       // recordテーブルからデータ削除する
       return await deleteRecord(req)
       break;
+    case "fetchOldPart":
+      // part_masterテーブルからデータを取得する
+      return await fetchOldPart(req)
+      break;
+    case "fetchOldMenu":
+      // menu_masterテーブルからデータを取得する
+      return await fetchOldMenu(req)
+      break;
+    case "fetchOldRecords":
+      // recordテーブルからデータを取得する
+      return await fetchOldRecords(req)
+      break;
     default:
       return new Response(JSON.stringify({ error: "Not Found" }), {
         status: 404,
@@ -359,6 +371,102 @@ async function deleteRecord(req: Request): Promise<Response> {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json"
+    },
+  });
+}
+
+/**
+ * データ取得（部位）
+ * @param req 
+ * @returns 
+ */
+async function fetchOldPart(req: Request): Promise<Response> {
+  const {data, error} = await supabase
+  .from("old_part_master")
+  .select("part_id, part_name, part_color")
+  .order("part_id", { ascending: true })
+
+  // エラーハンドリング
+  if (error) {
+    console.log('fethcOldPart error:', error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { 
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json"
+    },
+  });
+}
+
+/**
+ * データ取得（種目）
+ * @param req 
+ * @returns 
+ */
+async function fetchOldMenu(req: Request): Promise<Response> {
+  const {data, error} = await supabase
+  .from("old_menu_master")
+  .select("menu_id, part_id, menu_name")
+  .order("menu_id", { ascending: true })
+
+  // エラーハンドリング
+  if (error) {
+    console.log('fethcOldMenu error:', error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { 
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json"
+    },
+  });
+}
+/**
+ * データ取得（記録一覧）
+ * @param req 
+ * @returns 
+ */
+async function fetchOldRecords(req: Request): Promise<Response> {
+  const {data, error} = await supabase
+  .from("old_record")
+  .select(
+    `
+      record_id,
+      old_part_master (part_name, part_color),
+      old_menu_master (menu_name),
+      set_count,
+      old_set_detail (current_set, weight, reps),
+      note,
+      create_date
+    `
+  )
+  .order("record_id", { ascending: true })
+
+  // エラーハンドリング
+  if (error) {
+    console.log('fethcOldRecords error:', error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json",
     },
   });
 }
