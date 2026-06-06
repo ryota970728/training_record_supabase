@@ -39,8 +39,7 @@ Deno.serve(async (req) => {
 
       case "insertRecord": {
         const { record } = await req.json()
-        const recordData = typeof record === 'string' ? JSON.parse(record) : record
-        return buildResponse(await service.insertTrainingRecord(supabase, recordData))
+        return buildResponse(await service.insertTrainingRecord(supabase, record))
       }
 
       case "deleteRecord": {
